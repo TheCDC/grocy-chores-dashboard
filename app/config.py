@@ -38,6 +38,10 @@ class Config:
     refresh_interval_seconds: int = 30
     dashboard_port: int = 8080
 
+    # --- Development ---
+    # Enable NiceGUI's file-watching reload for live code changes.
+    dev_reload: bool = False
+
 
 def _get_required(name: str) -> str:
     value = os.environ.get(name)
@@ -73,6 +77,12 @@ def load_config() -> Config:
     )
     dashboard_port = int(os.environ.get("DASHBOARD_PORT", "8080"))
 
+    dev_reload = os.environ.get("DEV_RELOAD", "false").lower() in (
+        "true",
+        "1",
+        "yes",
+    )
+
     return Config(
         grocy_base_url=grocy_base_url,
         grocy_api_key=grocy_api_key,
@@ -82,4 +92,5 @@ def load_config() -> Config:
         user_config_path=user_config_path,
         refresh_interval_seconds=refresh_interval_seconds,
         dashboard_port=dashboard_port,
+        dev_reload=dev_reload,
     )

@@ -23,6 +23,7 @@ def main() -> None:
         host="0.0.0.0",
         port=config.dashboard_port,
         title="Chores Dashboard",
+        reload=config.dev_reload,
         # TODO: consider ui.run(..., show=False) in the container context
         # (no local browser to open), and dark/light theming decisions
         # once ui/theme.py's real values are picked.

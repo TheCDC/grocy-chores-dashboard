@@ -1,0 +1,8 @@
+services:
+  chores-dashboard:
+    volumes:
+      # Bind-mount source code so changes on the host trigger
+      # NiceGUI's auto-reload (set DEV_RELOAD=true below).
+      - ./app:/app/app
+    environment:
+      DEV_RELOAD: "true"
