@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+import humanize
 from nicegui import ui
 
 from app.models import DashboardChore, DashboardUser
@@ -60,12 +61,9 @@ def render_chore_row(
                 "text-lg font-semibold"
             )
             if chore.due_at is not None:
-                # TODO: human-friendly relative due-date formatting
-                # ("Overdue by 2 days" / "Due tomorrow"), not a raw
-                # timestamp — this is a glance-at-from-across-the-room UI.
-                ui.label(str(chore.due_at)).style(f"color: {resolved_theme.text_muted};").classes(
-                    "text-sm"
-                )
+                ui.label(humanize.naturaltime(chore.due_at)).style(
+                    f"color: {resolved_theme.text_muted};"
+                ).classes("text-sm")
 
         # No confirmation — one tap, done. See on_mark_done docstring above.
         ui.button(
