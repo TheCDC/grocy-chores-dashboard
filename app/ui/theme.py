@@ -71,7 +71,7 @@ def color_swatch_picker(
             if is_active:
                 btn.props("outline")
 
-        if allow_custom and current_color.upper() not in {s.upper() for s in palette}:
+        if allow_custom:
             _custom_swatch_with_picker(current_color, on_select)
 
 
