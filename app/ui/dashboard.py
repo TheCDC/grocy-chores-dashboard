@@ -6,6 +6,9 @@ and owns the refresh/action wiring.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from uuid import uuid4
+
 from nicegui import ui
 
 from app.models import DashboardChore, DashboardUser
@@ -13,6 +16,10 @@ from app.services.chore_service import ChoreService, ReassignNotAllowedError
 from app.services.polling import start_auto_refresh
 from app.ui import theme
 from app.ui.user_card import render_user_card
+
+# Module-level registry for undo callbacks.  Keyed by a random hex string
+# (not execution_id) so multiple quick actions don't collide.
+_undo_callbacks: dict[str, Callable[[], None]] = {}
 
 
 def build_dashboard_page(chore_service: ChoreService, refresh_interval_seconds: int) -> None:
@@ -60,6 +67,27 @@ def build_dashboard_page(chore_service: ChoreService, refresh_interval_seconds: 
                 f"color: {theme.TEXT_MUTED};"
             )
 
+        # Undo bar — lives outside the container so it survives re-renders.
+        undo_bar = ui.row().classes("w-full justify-end mt-4")
+        undo_bar.set_visibility(False)
+
+        def _refresh_undo_bar() -> None:
+            """Rebuild the undo action buttons from _undo_callbacks."""
+            undo_bar.clear()
+            if not _undo_callbacks:
+                undo_bar.set_visibility(False)
+                return
+
+            with undo_bar:
+                for uid, callback in list(_undo_callbacks.items()):
+                    def make_handler(_uid=uid, _cb=callback):
+                        _undo_callbacks.pop(_uid, None)
+                        _cb()
+                        _refresh_undo_bar()
+
+                    ui.button("Undo", on_click=make_handler).props("flat color=primary")
+            undo_bar.set_visibility(True)
+
         def render() -> None:
             container.clear()
             data = chore_service.get_dashboard_data()
@@ -94,6 +122,8 @@ def build_dashboard_page(chore_service: ChoreService, refresh_interval_seconds: 
                         ),
                     )
 
+            _refresh_undo_bar()
+
         render()
         start_auto_refresh(render, refresh_interval_seconds)
 
@@ -118,18 +148,32 @@ def _load_fonts() -> None:
     )
 
 
+def _schedule_refresh(refresh) -> None:
+    """Defer a dashboard refresh to the next event-loop tick.
+
+    ``render()`` calls ``container.clear()`` which destroys every child
+    element (including the button whose click handler is currently
+    executing).  Calling ``refresh`` directly inside an event handler
+    leaves NiceGUI's context machinery pointing at a deleted slot,
+    causing ``RuntimeError: The parent element this slot belongs to has
+    been deleted.``  A one-shot timer avoids this by letting the current
+    handler finish completely on the still-valid slot before the rebuild.
+    """
+    ui.timer(0.01, refresh, once=True)
+
+
 def _handle_mark_done(service: ChoreService, chore_id: int, user_id: int, refresh) -> None:
     execution_id = service.mark_done(chore_id, user_id)
-    refresh()  # immediate refresh per requirements §6, not waiting on poll
     _notify_with_undo(service, "Marked done.", execution_id, refresh)
+    _schedule_refresh(refresh)
 
 
 def _handle_skip(service: ChoreService, chore_id: int, user_id: int, refresh) -> None:
     # Confirmation already happened in ui/chore_row.py's _confirm_skip
     # before this was called.
     execution_id = service.skip(chore_id, user_id)
-    refresh()
     _notify_with_undo(service, "Skipped.", execution_id, refresh)
+    _schedule_refresh(refresh)
 
 
 def _handle_reassign(
@@ -144,42 +188,36 @@ def _handle_reassign(
         # stale render).
         ui.notify(str(exc), type="warning")
         return
-    refresh()
+    _schedule_refresh(refresh)
 
 
 def _notify_with_undo(service: ChoreService, message: str, execution_id: int | None, refresh) -> None:
-    """Show a toast for a mark-done/skip action, with an "Undo" button
-    when we have an execution ID to undo (requirements: undo is exposed).
+    """Show a toast for a mark-done/skip action, and register an undo
+    button in the dashboard's undo bar.
 
-    Confirmed against the installed NiceGUI version: `ui.notify(...)`
-    accepts arbitrary `**kwargs` and passes them through to the
-    underlying Quasar Notify component, which supports an `actions` list
-    of `{label, handler}` dicts — this is Quasar's own undo-toast
-    pattern, not a NiceGUI-specific API. Not yet confirmed that Quasar
-    actually renders the action button end-to-end (that needs a running
-    browser, not just an import check) — verify visually once this runs
-    for real, and adjust the dict shape if Quasar expects different keys
-    (e.g. some Quasar versions use `handler` vs `onClick`, or need a
-    `color` per action).
+    Quasar's ``Notify`` API supports ``actions=[{handler,...}]`` but
+    ``handler`` must be a *client-side* JavaScript function — not a
+    Python callable.  Passing a Python function through would cause
+    a ``TypeError`` when NiceGUI's outbox serializes the payload with
+    orjson.  Instead we store the callback in ``_undo_callbacks`` and
+    render the undo button with a proper NiceGUI ``on_click`` handler
+    via ``_refresh_undo_bar``.
     """
     if execution_id is None:
         ui.notify(message)
         return
 
+    uid = uuid4().hex
+
     def _undo() -> None:
-        service.undo(execution_id)
-        refresh()
+        _undo_callbacks.pop(uid, None)
+        try:
+            service.undo(execution_id)
+        except Exception:
+            pass
+        _schedule_refresh(refresh)
         ui.notify("Undone.")
 
-    try:
-        ui.notify(
-            message,
-            actions=[{"label": "Undo", "color": "white", "handler": _undo}],
-        )
-    except TypeError:
-        # NiceGUI version doesn't support `actions` the way we assumed —
-        # fall back to a plain toast rather than losing the action
-        # entirely silently. TODO: replace with whatever this NiceGUI
-        # version's actual undo-toast mechanism is (or roll a small
-        # custom notification component if none exists).
-        ui.notify(f"{message} (undo unavailable in this UI build)")
+    _undo_callbacks[uid] = _undo
+    ui.timer(15.0, lambda: _undo_callbacks.pop(uid, None), once=True)
+    ui.notify(message, type="positive", position="bottom-right")
