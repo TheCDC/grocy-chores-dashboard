@@ -31,20 +31,9 @@ def build_dashboard_page(chore_service: ChoreService, refresh_interval_seconds: 
     @ui.page("/")
     def dashboard_page() -> None:
         _load_fonts()
-        ui.query("body").style(f"background: {theme.BACKGROUND};")
 
-        # Small header row with a settings link (app/ui/settings.py).
-        # TODO: this is a plain text link for now — on a wall-mounted
-        # touch display, consider a less-discoverable placement (small
-        # gear icon in a corner) so it isn't a tempting tap target for
-        # kids, per the "no login" access model in requirements §3.
-        with ui.row().classes("items-center justify-between w-full"):
-            ui.label("Chores").style(
-                f"color: {theme.TEXT_PRIMARY}; font-family: {theme.FONT_DISPLAY};"
-            ).classes("text-4xl")
-            ui.link("Settings", "/settings").style(f"color: {theme.TEXT_MUTED};").classes(
-                "text-sm"
-            )
+        # Header area — rebuilt on each render so theme updates propagate.
+        header_area = ui.row().classes("items-center justify-between w-full")
 
         # Container that render() below clears and repopulates on every
         # refresh. Simplest correct approach for v1; consider NiceGUI's
@@ -89,8 +78,18 @@ def build_dashboard_page(chore_service: ChoreService, refresh_interval_seconds: 
             undo_bar.set_visibility(True)
 
         def render() -> None:
+            header_area.clear()
             container.clear()
-            data = chore_service.get_dashboard_data()
+            data, resolved_theme = chore_service.get_dashboard_data()
+            ui.query("body").style(f"background: {resolved_theme.background};")
+
+            with header_area:
+                ui.label("Chores").style(
+                    f"color: {resolved_theme.text_primary}; font-family: {theme.FONT_DISPLAY};"
+                ).classes("text-4xl")
+                ui.link("Settings", "/settings").style(
+                    f"color: {resolved_theme.text_muted};"
+                ).classes("text-sm")
 
             if not data:
                 container.set_visibility(False)
@@ -103,14 +102,11 @@ def build_dashboard_page(chore_service: ChoreService, refresh_interval_seconds: 
 
             with container:
                 for user_chores in data:
-                    # Color comes resolved on the user object itself
-                    # (deterministic-by-id, or a user_config override) —
-                    # see chore_service.get_dashboard_data() and
-                    # ui/theme.get_user_color().
                     render_user_card(
                         user_chores,
                         all_users=all_users,
                         accent_color=user_chores.user.color,
+                        resolved_theme=resolved_theme,
                         on_mark_done=lambda chore_id, uid=user_chores.user.id: _handle_mark_done(
                             chore_service, chore_id, uid, render
                         ),
