@@ -12,7 +12,7 @@ from datetime import datetime
 from app.config import Config
 from app.grocy_client import GrocyClient
 from app.models import DashboardChore, DashboardUser, UserChores
-from app.ui.theme import get_user_color
+from app.ui.theme import ResolvedTheme, get_user_color, resolve_theme
 from app.user_config import UserConfig, UserConfigNotFoundError, load_user_config
 
 # grocy-py's AssignmentType enum — the exact import path is our one
@@ -49,12 +49,13 @@ class ChoreService:
             # visit /settings rather than crashing.
             return UserConfig(users=[])
 
-    def get_dashboard_data(self) -> list[UserChores]:
+    def get_dashboard_data(self) -> tuple[list[UserChores], ResolvedTheme]:
         """Fetch current state and return one UserChores per included user,
         in the order given by the user config file (app/user_config.py —
         the JSON include list controls both filtering and card order).
         """
         user_config = self._load_user_config()
+        theme = resolve_theme(user_config)
         raw_users = {u.id: u for u in self._client.list_users()}
         raw_chores = self._client.list_chores()
 
@@ -90,6 +91,7 @@ class ChoreService:
                 id=raw_user.id,
                 display_name=raw_user.display_name,
                 color=get_user_color(raw_user.id, override=entry.color),
+                card_bg=entry.card_bg or theme.surface,
             )
             result.append(
                 UserChores(
@@ -97,7 +99,7 @@ class ChoreService:
                     chores=chores_by_user.get(entry.id, []),
                 )
             )
-        return result
+        return result, theme
 
     # --- Actions -------------------------------------------------------
     #
