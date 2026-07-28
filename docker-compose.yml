@@ -1,0 +1,30 @@
+services:
+  chores-dashboard:
+    build: .
+    # image: ghcr.io/TODO/grocy-chores-dashboard:latest  # once published
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      GROCY_BASE_URL: ${GROCY_BASE_URL}
+      GROCY_API_KEY: ${GROCY_API_KEY}
+      GROCY_PORT: ${GROCY_PORT:-}
+      GROCY_VERIFY_SSL: ${GROCY_VERIFY_SSL:-true}
+      USER_CONFIG_PATH: /data/dashboard_users.json
+      REFRESH_INTERVAL_SECONDS: ${REFRESH_INTERVAL_SECONDS:-30}
+      DASHBOARD_PORT: 8080
+    volumes:
+      # Persists the user config (including any edits made via the
+      # settings page at /settings) across container recreation. Seed it
+      # once from config/dashboard_users.example.json before first boot,
+      # or start empty and add users entirely from the settings page
+      # (see PLAN.md §5 open questions on first-run behavior).
+      - ./data:/data
+    # TODO: if Grocy itself also runs via compose on this host, put both
+    # on a shared network and use the Grocy service name as
+    # GROCY_BASE_URL instead of an external URL — e.g.:
+    # networks:
+    #   - grocy_net
+    # networks:
+    #   grocy_net:
+    #     external: true
