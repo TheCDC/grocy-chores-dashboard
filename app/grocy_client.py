@@ -137,14 +137,12 @@ class GrocyClient:
         automatically) — so nothing downstream of this method has to
         change. Total: 2 requests instead of 2N+1.
         """
-        status_by_id = {
-            c.id: c for c in self._client.chores.list(get_details=False)
-        }
+        status_by_id = {c.id: c for c in self._client.chores.list(get_details=False)}
         master_rows = self._client.generic.list(EntityType.CHORES)
 
         merged: list[Chore] = []
         for row in master_rows:
-            if row.get("disable"):
+            if not row.get("active"):
                 continue
             status = status_by_id.get(row["id"])
             merged.append(
