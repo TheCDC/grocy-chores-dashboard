@@ -14,6 +14,8 @@ from app.grocy_client import GrocyClient
 from app.models import DashboardChore, DashboardUser, UserChores
 from app.ui.theme import ResolvedTheme, get_user_color, resolve_theme
 from app.user_config import UserConfig, UserConfigNotFoundError, load_user_config
+from datetime import datetime
+import pytz
 
 # grocy-py's AssignmentType enum — the exact import path is our one
 # unverified assumption in this file (matches the module layout implied
@@ -110,7 +112,9 @@ class ChoreService:
     # poll cycle) — that re-fetch is done by the caller, ui/dashboard.py,
     # not here, since it also owns re-rendering.
 
-    def mark_done(self, chore_id: int, done_by_user_id: int) -> int | None:
+    def mark_done(
+        self, chore_id: int, done_by_user_id: int, tracked_time: datetime | None = None
+    ) -> int | None:
         """Mark a chore done. No confirmation gate (decision: mark-done
         stays single-tap — see ui/chore_row.py).
 
@@ -119,7 +123,17 @@ class ChoreService:
         See grocy_client.mark_done()'s docstring re: unverified return
         shape; this extraction is best-effort until that's confirmed.
         """
-        result = self._client.mark_done(chore_id, done_by_user_id)
+        self._config.timezone
+        tracked_time = (
+            tracked_time
+            if tracked_time
+            else (
+                datetime.now(pytz.timezone(self._config.timezone))
+                if self._config.timezone
+                else datetime.now()
+            )
+        )
+        result = self._client.mark_done(chore_id, done_by_user_id, tracked_time)
         return _extract_execution_id(result)
 
     def skip(self, chore_id: int, done_by_user_id: int) -> int | None:
@@ -193,9 +207,7 @@ def _to_dashboard_chore(raw_chore) -> DashboardChore:
         id=raw_chore.id,
         name=raw_chore.name,
         description=getattr(raw_chore, "description", None),
-        assigned_user_id=getattr(
-            raw_chore, "next_execution_assigned_to_user_id", None
-        ),
+        assigned_user_id=getattr(raw_chore, "next_execution_assigned_to_user_id", None),
         due_at=due_at,
         is_overdue=is_overdue,
         is_manually_reassignable=_is_manually_reassignable(raw_chore),
@@ -244,11 +256,11 @@ def _extract_execution_id(execute_result) -> int | None:
     if hasattr(execute_result, "id"):
         try:
             return int(execute_result.id)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return None
     if isinstance(execute_result, dict) and "id" in execute_result:
         try:
             return int(execute_result["id"])
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return None
     return None

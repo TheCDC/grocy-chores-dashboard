@@ -13,6 +13,7 @@ services:
       USER_CONFIG_PATH: /data/dashboard_users.json
       REFRESH_INTERVAL_SECONDS: ${REFRESH_INTERVAL_SECONDS:-30}
       DASHBOARD_PORT: 8080
+      TZ: ${TIMEZONE}
     volumes:
       # Persists the user config (including any edits made via the
       # settings page at /settings) across container recreation. Seed it

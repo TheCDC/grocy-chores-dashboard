@@ -41,6 +41,7 @@ class Config:
     # --- Development ---
     # Enable NiceGUI's file-watching reload for live code changes.
     dev_reload: bool = False
+    timezone: str = "America/Los_Angeles"
 
 
 def _get_required(name: str) -> str:
@@ -56,6 +57,7 @@ def load_config() -> Config:
     Raises:
         ConfigError: if required variables are missing or malformed.
     """
+    timezone = _get_required("TZ")
     grocy_base_url = _get_required("GROCY_BASE_URL")
     grocy_api_key = _get_required("GROCY_API_KEY")
 
@@ -68,13 +70,9 @@ def load_config() -> Config:
         "no",
     )
 
-    user_config_path = os.environ.get(
-        "USER_CONFIG_PATH", "/data/dashboard_users.json"
-    )
+    user_config_path = os.environ.get("USER_CONFIG_PATH", "/data/dashboard_users.json")
 
-    refresh_interval_seconds = int(
-        os.environ.get("REFRESH_INTERVAL_SECONDS", "30")
-    )
+    refresh_interval_seconds = int(os.environ.get("REFRESH_INTERVAL_SECONDS", "30"))
     dashboard_port = int(os.environ.get("DASHBOARD_PORT", "8080"))
 
     dev_reload = os.environ.get("DEV_RELOAD", "false").lower() in (
@@ -82,7 +80,6 @@ def load_config() -> Config:
         "1",
         "yes",
     )
-
     return Config(
         grocy_base_url=grocy_base_url,
         grocy_api_key=grocy_api_key,
@@ -93,4 +90,5 @@ def load_config() -> Config:
         refresh_interval_seconds=refresh_interval_seconds,
         dashboard_port=dashboard_port,
         dev_reload=dev_reload,
+        timezone=timezone,
     )

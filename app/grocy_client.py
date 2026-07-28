@@ -169,7 +169,12 @@ class GrocyClient:
 
     # --- Writes --------------------------------------------------------
 
-    def mark_done(self, chore_id: int, done_by_user_id: int):
+    def mark_done(
+        self,
+        chore_id: int,
+        done_by_user_id: int,
+        tracked_time: datetime | None = None,
+    ):
         """Mark a chore as done by the given user.
 
         Maps to grocy.chores.execute(chore_id, done_by=..., skipped=False).
@@ -182,7 +187,10 @@ class GrocyClient:
         "Undo" notification action.
         """
         return self._client.chores.execute(
-            chore_id=chore_id, done_by=done_by_user_id, skipped=False
+            chore_id=chore_id,
+            done_by=done_by_user_id,
+            skipped=False,
+            tracked_time=tracked_time,
         )
 
     def skip(self, chore_id: int, done_by_user_id: int):
