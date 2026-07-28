@@ -55,57 +55,50 @@ def render_chore_row(
     overdue_style = (
         f"border-left: 4px solid {resolved_theme.overdue_accent}; padding-left: 8px;"
         if chore.is_overdue
-        else "padding-left: 12px;"  # keep text aligned whether or not the bar is present
+        else "padding-left: 12px;"
     )
-    with ui.row().classes("items-center w-full flex-nowrap").style(overdue_style):
-        with ui.column().classes("flex-grow min-w-0"):
-            ui.label(chore.name).style(f"color: {text_color};").classes(
-                "text-base font-semibold truncate"
-            )
+    with ui.column().classes("w-full").style(overdue_style):
+        ui.label(chore.name).style(f"color: {text_color};").classes(
+            "text-base font-semibold truncate"
+        )
+        with ui.row().classes("items-center w-full gap-1"):
             if chore.due_at is not None:
                 ui.label(humanize.naturaltime(chore.due_at)).style(
                     f"color: {text_muted};"
-                ).classes("text-sm")
+                ).classes("text-sm flex-grow")
 
-        # No confirmation — one tap, done. See on_mark_done docstring above.
-        ui.button(
-            icon="done",
-            on_click=lambda: on_mark_done(chore.id),
-        ).props("unelevated round dense").classes(
-            f"min-w-[{theme.MIN_TAP_TARGET_PX}px]"
-        ).tooltip("Mark done")
+            # No confirmation — one tap, done. See on_mark_done docstring above.
+            ui.button(
+                icon="done",
+                on_click=lambda: on_mark_done(chore.id),
+            ).props("unelevated round dense").classes(
+                f"min-w-[{theme.MIN_TAP_TARGET_PX}px]"
+            ).tooltip("Mark done")
 
-        ui.button(
-            icon="skip_next",
-            on_click=lambda: _confirm_skip(chore, on_skip),
-        ).props("flat round dense").classes(
-            f"min-w-[{theme.MIN_TAP_TARGET_PX}px]"
-        ).tooltip("Skip")
+            ui.button(
+                icon="skip_next",
+                on_click=lambda: _confirm_skip(chore, on_skip),
+            ).props("flat round dense").classes(
+                f"min-w-[{theme.MIN_TAP_TARGET_PX}px]"
+            ).tooltip("Skip")
 
-        if chore.is_manually_reassignable:
-            options = {u.id: u.display_name for u in other_users}
-            # TODO: replace with a proper picker (ui.select or a dialog
-            # with per-user buttons/avatars, given this is touch-first —
-            # a dropdown may be too fiddly on a wall tablet). Placeholder
-            # wiring shown for the data flow only.
-            ui.select(
-                options,
-                label="Reassign",
-                on_change=lambda e: on_reassign(chore, e.value),
-            ).classes("w-20")
-        else:
-            # Disabled rather than omitted, so it's visible that
-            # reassignment exists but isn't available for this chore —
-            # avoids "why can't I do this on some chores" confusion.
-            ui.select(
-                {},
-                label="Reassign",
-                on_change=lambda e: None,
-            ).classes("w-20").props("disable").tooltip(
-                "This chore auto-assigns the next person "
-                "(see its assignment settings in Grocy), so it can't be "
-                "manually reassigned here."
-            )
+            if chore.is_manually_reassignable:
+                options = {u.id: u.display_name for u in other_users}
+                ui.select(
+                    options,
+                    label="Reassign",
+                    on_change=lambda e: on_reassign(chore, e.value),
+                ).classes("w-20")
+            else:
+                ui.select(
+                    {},
+                    label="Reassign",
+                    on_change=lambda e: None,
+                ).classes("w-20").props("disable").tooltip(
+                    "This chore auto-assigns the next person "
+                    "(see its assignment settings in Grocy), so it can't be "
+                    "manually reassigned here."
+                )
 
 
 def _confirm_skip(chore: DashboardChore, on_skip: Callable[[int], None]) -> None:
