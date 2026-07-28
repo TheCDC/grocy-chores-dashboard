@@ -69,14 +69,18 @@ def render_chore_row(
 
         # No confirmation — one tap, done. See on_mark_done docstring above.
         ui.button(
-            "Done",
+            icon="done",
             on_click=lambda: on_mark_done(chore.id),
-        ).props("unelevated").classes(f"min-w-[{theme.MIN_TAP_TARGET_PX}px]")
+        ).props("unelevated round dense").classes(
+            f"min-w-[{theme.MIN_TAP_TARGET_PX}px] min-h-[{theme.MIN_TAP_TARGET_PX}px]"
+        ).tooltip("Mark done")
 
         ui.button(
-            "Skip",
+            icon="skip_next",
             on_click=lambda: _confirm_skip(chore, on_skip),
-        ).props("flat")
+        ).props("flat round dense").classes(
+            f"min-w-[{theme.MIN_TAP_TARGET_PX}px] min-h-[{theme.MIN_TAP_TARGET_PX}px]"
+        ).tooltip("Skip")
 
         if chore.is_manually_reassignable:
             options = {u.id: u.display_name for u in other_users}
