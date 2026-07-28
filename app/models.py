@@ -19,6 +19,7 @@ class DashboardUser:
     # in chore_service.py — deterministic from user id unless overridden
     # in the user config JSON (see app/user_config.py, settings page).
     color: str
+    card_bg: str
 
 
 @dataclass(frozen=True)

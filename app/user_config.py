@@ -38,12 +38,18 @@ class UserEntry:
     # This field is what the settings page writes to when someone picks
     # a custom color for a user.
     color: str | None = None
+    card_bg: str | None = None
 
 
 @dataclass
 class UserConfig:
     # Order of this list is the dashboard's left-to-right card order.
     users: list[UserEntry] = field(default_factory=list)
+    page_bg: str | None = None
+    surface: str | None = None
+    text_primary: str | None = None
+    text_muted: str | None = None
+    overdue_accent: str | None = None
 
     def user_ids(self) -> list[int]:
         return [u.id for u in self.users]
@@ -79,7 +85,7 @@ def load_user_config(path: str | Path) -> UserConfig:
         raise UserConfigError(f"Invalid JSON in {p}: {exc}") from exc
 
     try:
-        users = [UserEntry(id=u["id"], color=u.get("color")) for u in raw["users"]]
+        users = [UserEntry(id=u["id"], color=u.get("color"), card_bg=u.get("card_bg")) for u in raw["users"]]
     except (KeyError, TypeError) as exc:
         raise UserConfigError(
             f"Malformed user config in {p}: expected {{'users': [{{'id': int, "
@@ -89,7 +95,14 @@ def load_user_config(path: str | Path) -> UserConfig:
     if not users:
         raise UserConfigError(f"User config in {p} has no users listed")
 
-    return UserConfig(users=users)
+    return UserConfig(
+        users=users,
+        page_bg=raw.get("page_bg"),
+        surface=raw.get("surface"),
+        text_primary=raw.get("text_primary"),
+        text_muted=raw.get("text_muted"),
+        overdue_accent=raw.get("overdue_accent"),
+    )
 
 
 def save_user_config(path: str | Path, config: UserConfig) -> None:
@@ -101,5 +114,11 @@ def save_user_config(path: str | Path, config: UserConfig) -> None:
     """
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-    payload = {"users": [asdict(u) for u in config.users]}
+    payload: dict = {}
+    payload["page_bg"] = config.page_bg
+    payload["surface"] = config.surface
+    payload["text_primary"] = config.text_primary
+    payload["text_muted"] = config.text_muted
+    payload["overdue_accent"] = config.overdue_accent
+    payload["users"] = [asdict(u) for u in config.users]
     p.write_text(json.dumps(payload, indent=2) + "\n")
