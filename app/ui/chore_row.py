@@ -20,6 +20,8 @@ def render_chore_row(
     chore: DashboardChore,
     *,
     other_users: list[DashboardUser],
+    text_color: str,
+    text_muted: str,
     resolved_theme: ResolvedTheme,
     on_mark_done: Callable[[int], None],
     on_skip: Callable[[int], None],
@@ -57,12 +59,12 @@ def render_chore_row(
     )
     with ui.row().classes("items-center w-full").style(overdue_style):
         with ui.column().classes("flex-grow"):
-            ui.label(chore.name).style(f"color: {resolved_theme.text_primary};").classes(
+            ui.label(chore.name).style(f"color: {text_color};").classes(
                 "text-lg font-semibold"
             )
             if chore.due_at is not None:
                 ui.label(humanize.naturaltime(chore.due_at)).style(
-                    f"color: {resolved_theme.text_muted};"
+                    f"color: {text_muted};"
                 ).classes("text-sm")
 
         # No confirmation — one tap, done. See on_mark_done docstring above.

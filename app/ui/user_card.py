@@ -59,7 +59,7 @@ def render_user_card(
             # blank card — this is a family dashboard, not an admin
             # table, and finishing your chores should feel good.
             ui.label("All done! 🎉").style(
-                f"color: {resolved_theme.text_muted}; font-family: {theme.FONT_BODY};"
+                f"color: {user_chores.user.text_muted}; font-family: {theme.FONT_BODY};"
             ).classes("text-sm mt-2")
             return
 
@@ -71,6 +71,8 @@ def render_user_card(
                 render_chore_row(
                     chore,
                     other_users=other_users,
+                    text_color=user_chores.user.text_color,
+                    text_muted=user_chores.user.text_muted,
                     resolved_theme=resolved_theme,
                     on_mark_done=on_mark_done,
                     on_skip=on_skip,

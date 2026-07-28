@@ -128,6 +128,14 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
                 entry.card_bg = color or None
                 render_entries()
 
+            def _set_text_color(color: str | None) -> None:
+                entry.text_color = color or None
+                render_entries()
+
+            def _set_text_muted(color: str | None) -> None:
+                entry.text_muted = color or None
+                render_entries()
+
             def confirm_remove() -> None:
                 with ui.dialog() as dialog, ui.card():
                     ui.label(f'Remove "{display_name}" from the dashboard?')
@@ -166,6 +174,26 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
                 )
                 if entry.color is not None:
                     ui.button("Use default", on_click=lambda: _set_accent(None)).props(
+                        "flat dense"
+                    )
+
+                ui.label("Text").style(f"color: {theme.TEXT_MUTED};").classes("text-xs")
+                color_swatch_picker(
+                    current_color=entry.text_color or resolve_theme(user_config).text_primary,
+                    on_select=_set_text_color,
+                )
+                if entry.text_color is not None:
+                    ui.button("Use default", on_click=lambda: _set_text_color(None)).props(
+                        "flat dense"
+                    )
+
+                ui.label("Muted").style(f"color: {theme.TEXT_MUTED};").classes("text-xs")
+                color_swatch_picker(
+                    current_color=entry.text_muted or resolve_theme(user_config).text_muted,
+                    on_select=_set_text_muted,
+                )
+                if entry.text_muted is not None:
+                    ui.button("Use default", on_click=lambda: _set_text_muted(None)).props(
                         "flat dense"
                     )
 

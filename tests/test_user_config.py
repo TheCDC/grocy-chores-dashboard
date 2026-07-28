@@ -24,6 +24,26 @@ def test_user_entry_card_bg_can_be_set():
     assert entry.card_bg == "#111111"
 
 
+def test_user_entry_text_color_defaults_to_none():
+    entry = UserEntry(id=1)
+    assert entry.text_color is None
+
+
+def test_user_entry_text_color_can_be_set():
+    entry = UserEntry(id=1, text_color="#ABCDEF")
+    assert entry.text_color == "#ABCDEF"
+
+
+def test_user_entry_text_muted_defaults_to_none():
+    entry = UserEntry(id=1)
+    assert entry.text_muted is None
+
+
+def test_user_entry_text_muted_can_be_set():
+    entry = UserEntry(id=1, text_muted="#654321")
+    assert entry.text_muted == "#654321"
+
+
 def test_user_config_global_overrides_default_to_none():
     config = UserConfig(users=[UserEntry(id=1)])
     assert config.page_bg is None
@@ -48,6 +68,8 @@ def test_user_config_global_overrides_round_trip(tmp_path: Path):
     assert loaded.text_primary is None
     assert loaded.users[0].card_bg == "#111111"
     assert loaded.users[0].color == "#FF0000"
+    assert loaded.users[0].text_color is None
+    assert loaded.users[0].text_muted is None
 
 
 def test_load_user_config_missing_new_fields_are_none(tmp_path: Path):
@@ -56,4 +78,6 @@ def test_load_user_config_missing_new_fields_are_none(tmp_path: Path):
     path.write_text(json.dumps({"users": [{"id": 1, "color": "#FFD166"}]}))
     config = load_user_config(path)
     assert config.users[0].card_bg is None
+    assert config.users[0].text_color is None
+    assert config.users[0].text_muted is None
     assert config.page_bg is None

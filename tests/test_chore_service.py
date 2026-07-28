@@ -9,7 +9,7 @@ from app.config import Config
 from app.grocy_client import GrocyClient
 from app.models import DashboardUser
 from app.services.chore_service import ChoreService
-from app.ui.theme import ResolvedTheme, SURFACE
+from app.ui.theme import ResolvedTheme, SURFACE, TEXT_PRIMARY, TEXT_MUTED
 from app.user_config import UserConfig, UserEntry
 
 
@@ -67,3 +67,57 @@ def test_dashboard_user_card_bg_falls_back_to_surface(service):
 
     user_chores_list, theme = service.get_dashboard_data()
     assert user_chores_list[0].user.card_bg == SURFACE
+
+
+def test_dashboard_user_has_resolved_text_color(service):
+    service._load_user_config = lambda: UserConfig(
+        users=[UserEntry(id=1, text_color="#ABCDEF")],
+    )
+    service._client.list_users.return_value = [
+        MagicMock(id=1, display_name="Alice")
+    ]
+    service._client.list_chores.return_value = []
+
+    user_chores_list, _ = service.get_dashboard_data()
+    assert len(user_chores_list) == 1
+    assert user_chores_list[0].user.text_color == "#ABCDEF"
+
+
+def test_dashboard_user_text_color_falls_back_to_text_primary(service):
+    service._load_user_config = lambda: UserConfig(
+        users=[UserEntry(id=1)],  # no text_color override
+    )
+    service._client.list_users.return_value = [
+        MagicMock(id=1, display_name="Alice")
+    ]
+    service._client.list_chores.return_value = []
+
+    user_chores_list, theme = service.get_dashboard_data()
+    assert user_chores_list[0].user.text_color == TEXT_PRIMARY
+
+
+def test_dashboard_user_has_resolved_text_muted(service):
+    service._load_user_config = lambda: UserConfig(
+        users=[UserEntry(id=1, text_muted="#654321")],
+    )
+    service._client.list_users.return_value = [
+        MagicMock(id=1, display_name="Alice")
+    ]
+    service._client.list_chores.return_value = []
+
+    user_chores_list, _ = service.get_dashboard_data()
+    assert len(user_chores_list) == 1
+    assert user_chores_list[0].user.text_muted == "#654321"
+
+
+def test_dashboard_user_text_muted_falls_back_to_text_muted(service):
+    service._load_user_config = lambda: UserConfig(
+        users=[UserEntry(id=1)],  # no text_muted override
+    )
+    service._client.list_users.return_value = [
+        MagicMock(id=1, display_name="Alice")
+    ]
+    service._client.list_chores.return_value = []
+
+    user_chores_list, theme = service.get_dashboard_data()
+    assert user_chores_list[0].user.text_muted == TEXT_MUTED

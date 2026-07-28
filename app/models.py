@@ -20,6 +20,8 @@ class DashboardUser:
     # in the user config JSON (see app/user_config.py, settings page).
     color: str
     card_bg: str = ""
+    text_color: str = ""
+    text_muted: str = ""
 
 
 @dataclass(frozen=True)

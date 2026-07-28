@@ -39,6 +39,8 @@ class UserEntry:
     # a custom color for a user.
     color: str | None = None
     card_bg: str | None = None
+    text_color: str | None = None
+    text_muted: str | None = None
 
 
 @dataclass
@@ -85,11 +87,11 @@ def load_user_config(path: str | Path) -> UserConfig:
         raise UserConfigError(f"Invalid JSON in {p}: {exc}") from exc
 
     try:
-        users = [UserEntry(id=u["id"], color=u.get("color"), card_bg=u.get("card_bg")) for u in raw["users"]]
+        users = [UserEntry(id=u["id"], color=u.get("color"), card_bg=u.get("card_bg"), text_color=u.get("text_color"), text_muted=u.get("text_muted")) for u in raw["users"]]
     except (KeyError, TypeError) as exc:
         raise UserConfigError(
             f"Malformed user config in {p}: expected {{'users': [{{'id': int, "
-            f"'color': str|null, 'card_bg': str|null}}, ...]}}"
+            f"'color': str|null, 'card_bg': str|null, 'text_color': str|null, 'text_muted': str|null}}, ...]}}"
         ) from exc
 
     if not users:

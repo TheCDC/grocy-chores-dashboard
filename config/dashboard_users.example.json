@@ -3,5 +3,10 @@
     { "id": 2, "color": null },
     { "id": 3, "color": null },
     { "id": 4, "color": "#TODO-explicit-override-example" }
-  ]
+  ],
+  "page_bg": null,
+  "surface": null,
+  "text_primary": null,
+  "text_muted": null,
+  "overdue_accent": null
 }
