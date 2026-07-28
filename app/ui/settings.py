@@ -21,10 +21,8 @@ from app.ui.theme import (
     TEXT_PRIMARY,
     TEXT_MUTED,
     OVERDUE_ACCENT,
-    ResolvedTheme,
     resolve_theme,
     color_swatch_picker,
-    get_user_color,
 )
 from app.user_config import (
     UserConfig,
@@ -173,7 +171,7 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
 
                 ui.label("BG").style(f"color: {theme.TEXT_MUTED};").classes("text-xs")
                 color_swatch_picker(
-                    current_color=entry.card_bg or SURFACE,
+                    current_color=entry.card_bg or resolve_theme(user_config).surface,
                     on_select=_set_card_bg,
                 )
                 if entry.card_bg is not None:

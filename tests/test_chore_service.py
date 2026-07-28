@@ -1,7 +1,7 @@
 """Tests for chore_service color config integration."""
 from __future__ import annotations
 
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -23,20 +23,17 @@ def service():
 
 def test_get_dashboard_data_returns_resolved_theme(service):
     """get_dashboard_data() should return a (list, ResolvedTheme) tuple."""
-    with (
-        MagicMock() as mock_config,
-    ):
-        # Force _load_user_config to return a config with overrides
-        service._load_user_config = lambda: UserConfig(
-            users=[UserEntry(id=1)],
-            page_bg="#000000",
-        )
-        service._client.list_users.return_value = [
-            MagicMock(id=1, display_name="Alice")
-        ]
-        service._client.list_chores.return_value = []
+    # Force _load_user_config to return a config with overrides
+    service._load_user_config = lambda: UserConfig(
+        users=[UserEntry(id=1)],
+        page_bg="#000000",
+    )
+    service._client.list_users.return_value = [
+        MagicMock(id=1, display_name="Alice")
+    ]
+    service._client.list_chores.return_value = []
 
-        result = service.get_dashboard_data()
+    result = service.get_dashboard_data()
 
     assert isinstance(result, tuple), "Should return a tuple"
     assert len(result) == 2

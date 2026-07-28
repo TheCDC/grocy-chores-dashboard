@@ -48,13 +48,6 @@ def build_dashboard_page(chore_service: ChoreService, refresh_interval_seconds: 
 
         empty_state = ui.column().classes("w-full items-center mt-8")
         empty_state.set_visibility(False)
-        with empty_state:
-            ui.label("No one's set up yet.").style(
-                f"color: {theme.TEXT_PRIMARY}; font-family: {theme.FONT_DISPLAY};"
-            ).classes("text-2xl")
-            ui.link("Add family members in Settings", "/settings").style(
-                f"color: {theme.TEXT_MUTED};"
-            )
 
         # Undo bar — lives outside the container so it survives re-renders.
         undo_bar = ui.row().classes("w-full justify-end mt-4")
@@ -93,6 +86,14 @@ def build_dashboard_page(chore_service: ChoreService, refresh_interval_seconds: 
 
             if not data:
                 container.set_visibility(False)
+                empty_state.clear()
+                with empty_state:
+                    ui.label("No one's set up yet.").style(
+                        f"color: {resolved_theme.text_primary}; font-family: {theme.FONT_DISPLAY};"
+                    ).classes("text-2xl")
+                    ui.link("Add family members in Settings", "/settings").style(
+                        f"color: {resolved_theme.text_muted};"
+                    )
                 empty_state.set_visibility(True)
                 return
             container.set_visibility(True)
