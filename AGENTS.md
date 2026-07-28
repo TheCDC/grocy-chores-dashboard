@@ -22,6 +22,16 @@ Local dev: `python -m app.main` (root `main.py` is a stub; real entry is `app/ma
 
 No linter, formatter, or type checker config exists.
 
+**Python version mismatch**: Dockerfile uses `python:3.12-slim`, `.python-version` says `3.14`, and the local `.venv` is 3.14. Don't "fix" either without understanding the intent — likely just pre-dates the Docker image updating.
+
+## Test patterns
+
+Tests use `pytest` with `pytest.mark.asyncio`. The one test file (`tests/test_slot_crash.py`) demonstrates:
+- NiceGUI's `user_simulation` for UI interaction tests
+- `patch("nicegui.ui.timer")` for unit-testing timer-based code
+- `app._exception_handlers.append(...)` to capture uncaught errors in async UI tests
+- `ui.timer(0.01, ..., once=True)` pattern to defer container rebuilds
+
 ## Architecture
 
 ```
@@ -47,3 +57,5 @@ main.py → Config → GrocyClient → ChoreService → ui/{dashboard,settings}
 - **Reassign guard**: only allowed for `assignment_type == NO_ASSIGNMENT`; UI disables picker + service enforces via `ReassignNotAllowedError`.
 - **PLAN.md** is the canonical design doc (confirmed-vs-assumed sections, open items live-before-run).
 - **Python 3.14** (`.python-version`). Dependencies: `nicegui>=1.4`, `grocy-py>=0.1.0`.
+- **`.gitignore` gaps**: doesn't cover `.env` (secrets) or `data/` (runtime user data). Be careful with git operations.
+- **Syncthing sync-conflict files** (`.sync-conflict-*`) exist in the tree — ignore them; they're stale copies, not source of truth.
