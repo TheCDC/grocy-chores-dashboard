@@ -15,6 +15,17 @@ from nicegui import ui
 from app.config import Config
 from app.grocy_client import GrocyClient
 from app.ui import theme
+from app.ui.theme import (
+    BACKGROUND,
+    SURFACE,
+    TEXT_PRIMARY,
+    TEXT_MUTED,
+    OVERDUE_ACCENT,
+    ResolvedTheme,
+    resolve_theme,
+    color_swatch_picker,
+    get_user_color,
+)
 from app.user_config import (
     UserConfig,
     UserConfigNotFoundError,
@@ -39,6 +50,47 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
 
         user_config: UserConfig = _load_or_init(config.user_config_path)
         all_grocy_users = {u.id: u for u in client.list_users()}
+
+        # --- Global Theme section ---
+        with ui.expansion("Global Theme", icon="palette").classes("w-full mt-4"):
+            ui.label("Customize the dashboard's overall color scheme.").style(
+                f"color: {theme.TEXT_MUTED};"
+            ).classes("text-sm")
+
+            theme_overrides = {
+                "page_bg": (user_config.page_bg, BACKGROUND, "Page background"),
+                "surface": (user_config.surface, SURFACE, "Card default background"),
+                "text_primary": (user_config.text_primary, TEXT_PRIMARY, "Primary text"),
+                "text_muted": (user_config.text_muted, TEXT_MUTED, "Muted text"),
+                "overdue_accent": (user_config.overdue_accent, OVERDUE_ACCENT, "Overdue accent"),
+            }
+
+            for field_name, (current_val, default_val, label) in theme_overrides.items():
+                resolved_val = current_val or default_val
+                with ui.row().classes("items-center gap-2 w-full"):
+                    ui.label(label).style(f"color: {theme.TEXT_PRIMARY};").classes("w-40")
+                    color_swatch_picker(
+                        current_color=resolved_val,
+                        on_select=lambda c, f=field_name: (
+                            setattr(user_config, f, c),
+                            render_entries(),
+                        ),
+                    )
+                    if current_val is not None:
+                        ui.button("Default", on_click=lambda f=field_name: (
+                            setattr(user_config, f, None),
+                            render_entries(),
+                        )).props("flat dense")
+
+            with ui.row().classes("items-center gap-2 mt-2"):
+                ui.button("Reset all to defaults", on_click=lambda: (
+                    setattr(user_config, "page_bg", None),
+                    setattr(user_config, "surface", None),
+                    setattr(user_config, "text_primary", None),
+                    setattr(user_config, "text_muted", None),
+                    setattr(user_config, "overdue_accent", None),
+                    render_entries(),
+                )).props("flat")
 
         ui.label("Users on the dashboard").style(f"color: {theme.TEXT_PRIMARY};").classes(
             "text-lg font-semibold mt-4"
@@ -70,8 +122,12 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
                 )
                 render_entries()
 
-            def set_color(new_color: str | None) -> None:
-                entry.color = new_color or None
+            def _set_accent(color: str | None) -> None:
+                entry.color = color or None
+                render_entries()
+
+            def _set_card_bg(color: str | None) -> None:
+                entry.card_bg = color or None
                 render_entries()
 
             def confirm_remove() -> None:
@@ -106,13 +162,22 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
                     "flex-grow font-medium"
                 )
 
-                ui.color_input(
-                    label="Color",
-                    value=entry.color or resolved_color,
-                    on_change=lambda e: set_color(e.value),
-                ).classes("w-40").props("dense")
+                color_swatch_picker(
+                    current_color=entry.color or resolved_color,
+                    on_select=_set_accent,
+                )
                 if entry.color is not None:
-                    ui.button("Use default", on_click=lambda: set_color(None)).props(
+                    ui.button("Use default", on_click=lambda: _set_accent(None)).props(
+                        "flat dense"
+                    )
+
+                ui.label("BG").style(f"color: {theme.TEXT_MUTED};").classes("text-xs")
+                color_swatch_picker(
+                    current_color=entry.card_bg or SURFACE,
+                    on_select=_set_card_bg,
+                )
+                if entry.card_bg is not None:
+                    ui.button("Use default", on_click=lambda: _set_card_bg(None)).props(
                         "flat dense"
                     )
 
