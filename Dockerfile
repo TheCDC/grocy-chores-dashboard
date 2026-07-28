@@ -15,4 +15,4 @@ EXPOSE 8080
 # TODO: add a HEALTHCHECK once main.py/NiceGUI exposes something to poll
 # (NiceGUI serves on "/" by default, which is fine as a health endpoint).
 
-CMD ["python", "-m", "app.main"]
+CMD ["uv", "run", "python", "-m", "app.main"]
