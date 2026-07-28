@@ -12,6 +12,7 @@ from nicegui import ui
 from app.models import DashboardChore, DashboardUser, UserChores
 from app.ui import theme
 from app.ui.chore_row import render_chore_row
+from app.ui.theme import ResolvedTheme
 
 
 def render_user_card(
@@ -19,6 +20,7 @@ def render_user_card(
     *,
     all_users: list[DashboardUser],
     accent_color: str,
+    resolved_theme: ResolvedTheme,
     on_mark_done: Callable[[int], None],
     on_skip: Callable[[int], None],
     on_reassign: Callable[[DashboardChore, int], None],
@@ -45,7 +47,7 @@ def render_user_card(
         f"flex-shrink-0 snap-center {theme.CARD_WIDTH_CLASSES}"
     ).style(
         f"min-height: {theme.CARD_MIN_HEIGHT_PX}px; "
-        f"background: {theme.SURFACE}; "
+        f"background: {user_chores.user.card_bg}; "
         f"border-top: 6px solid {accent_color};"
     ):
         ui.label(user_chores.user.display_name).style(
@@ -57,7 +59,7 @@ def render_user_card(
             # blank card — this is a family dashboard, not an admin
             # table, and finishing your chores should feel good.
             ui.label("All done! 🎉").style(
-                f"color: {theme.TEXT_MUTED}; font-family: {theme.FONT_BODY};"
+                f"color: {resolved_theme.text_muted}; font-family: {theme.FONT_BODY};"
             ).classes("text-sm mt-2")
             return
 
@@ -69,6 +71,7 @@ def render_user_card(
                 render_chore_row(
                     chore,
                     other_users=other_users,
+                    resolved_theme=resolved_theme,
                     on_mark_done=on_mark_done,
                     on_skip=on_skip,
                     on_reassign=on_reassign,

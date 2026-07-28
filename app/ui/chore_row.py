@@ -12,12 +12,14 @@ from nicegui import ui
 
 from app.models import DashboardChore, DashboardUser
 from app.ui import theme
+from app.ui.theme import ResolvedTheme
 
 
 def render_chore_row(
     chore: DashboardChore,
     *,
     other_users: list[DashboardUser],
+    resolved_theme: ResolvedTheme,
     on_mark_done: Callable[[int], None],
     on_skip: Callable[[int], None],
     on_reassign: Callable[[DashboardChore, int], None],
