@@ -21,15 +21,21 @@ from app.ui.user_card import render_user_card
 # (not execution_id) so multiple quick actions don't collide.
 _undo_callbacks: dict[str, Callable[[], None]] = {}
 
+# Persistent hidden element that hosts one-shot refresh timers so they
+# survive container.clear() — see _schedule_refresh docstring.
+_timer_anchor: ui.element | None = None
+
 
 def build_dashboard_page(chore_service: ChoreService, refresh_interval_seconds: int) -> None:
     """Register the dashboard as the NiceGUI index page.
 
     Call once from main.py after constructing ChoreService.
     """
+    global _timer_anchor
 
     @ui.page("/")
     def dashboard_page() -> None:
+        global _timer_anchor
         _load_fonts()
 
         # Header area — rebuilt on each render so theme updates propagate.
@@ -53,6 +59,12 @@ def build_dashboard_page(chore_service: ChoreService, refresh_interval_seconds: 
         undo_bar = ui.row().classes("w-full justify-end mt-4")
         undo_bar.set_visibility(False)
 
+        # A hidden, persistent anchor for refresh timers — lives outside
+        # the container so container.clear() never destroys the timer's
+        # parent slot, which would otherwise crash any subsequent
+        # context-dependent operation (e.g. ui.query, element creation).
+        _timer_anchor = ui.row().classes("hidden")
+
         def _refresh_undo_bar() -> None:
             """Rebuild the undo action buttons from _undo_callbacks."""
             undo_bar.clear()
@@ -71,10 +83,25 @@ def build_dashboard_page(chore_service: ChoreService, refresh_interval_seconds: 
             undo_bar.set_visibility(True)
 
         def render() -> None:
+            # Fetch data BEFORE clearing so that if the fetch fails
+            # (network error, Grocy API down, etc.) the old UI stays
+            # visible instead of going permanently blank.
+            try:
+                data, resolved_theme = chore_service.get_dashboard_data()
+            except Exception:
+                ui.notify("Refresh failed — will retry automatically", type="negative")
+                return
+
+            # Set body style BEFORE container.clear() — the timer's
+            # parent slot lives under the container, and once the
+            # container is cleared any operation that resolves
+            # context.client (such as ui.query) will crash with
+            # RuntimeError('The parent element this slot belongs to
+            # has been deleted.').
+            ui.query("body").style(f"background: {resolved_theme.background};")
+
             header_area.clear()
             container.clear()
-            data, resolved_theme = chore_service.get_dashboard_data()
-            ui.query("body").style(f"background: {resolved_theme.background};")
 
             with header_area:
                 ui.label("Chores").style(
@@ -148,15 +175,22 @@ def _load_fonts() -> None:
 def _schedule_refresh(refresh) -> None:
     """Defer a dashboard refresh to the next event-loop tick.
 
-    ``render()`` calls ``container.clear()`` which destroys every child
-    element (including the button whose click handler is currently
-    executing).  Calling ``refresh`` directly inside an event handler
-    leaves NiceGUI's context machinery pointing at a deleted slot,
-    causing ``RuntimeError: The parent element this slot belongs to has
-    been deleted.``  A one-shot timer avoids this by letting the current
-    handler finish completely on the still-valid slot before the rebuild.
+    .. important::
+       The underlying ``ui.timer`` element is created as a child of
+       ``_timer_anchor`` — a hidden row sitting outside the dashboard
+       container — so that when ``render()`` later calls
+       ``container.clear()`` the timer's parent slot survives.
+       Without this, the timer's slot-parent gets deleted by
+       ``container.clear()`` and any subsequent operation that resolves
+       ``context.client`` (``ui.query(...)``, element creation, etc.)
+       crashes with ``RuntimeError('The parent element this slot
+       belongs to has been deleted.')``.
     """
-    ui.timer(0.01, refresh, once=True)
+    if _timer_anchor is not None:
+        with _timer_anchor:
+            ui.timer(0.01, refresh, once=True)
+    else:
+        ui.timer(0.01, refresh, once=True)
 
 
 def _handle_mark_done(service: ChoreService, chore_id: int, user_id: int, refresh) -> None:
@@ -216,5 +250,9 @@ def _notify_with_undo(service: ChoreService, message: str, execution_id: int | N
         ui.notify("Undone.")
 
     _undo_callbacks[uid] = _undo
-    ui.timer(15.0, lambda: _undo_callbacks.pop(uid, None), once=True)
+    if _timer_anchor is not None:
+        with _timer_anchor:
+            ui.timer(15.0, lambda: _undo_callbacks.pop(uid, None), once=True)
+    else:
+        ui.timer(15.0, lambda: _undo_callbacks.pop(uid, None), once=True)
     ui.notify(message, type="positive", position="bottom-right")
