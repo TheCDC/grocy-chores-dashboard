@@ -144,6 +144,8 @@ class GrocyClient:
 
         merged: list[Chore] = []
         for row in master_rows:
+            if row.get("disable"):
+                continue
             status = status_by_id.get(row["id"])
             merged.append(
                 Chore(
