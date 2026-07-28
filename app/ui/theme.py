@@ -50,7 +50,8 @@ def color_swatch_picker(
     palette: list[str] | None = None,
     allow_custom: bool = True,
 ) -> None:
-    """Render a row of clickable color swatches + optional custom hex picker."""
+    """Compact color picker: a button showing the current color opens a
+    dialog with swatches + optional custom hex input."""
     from nicegui import ui
 
     if palette is None:
@@ -58,47 +59,49 @@ def color_swatch_picker(
 
     current_upper = current_color.upper()
 
-    with ui.row().classes("items-center gap-1"):
-        for swatch in palette:
-            is_active = swatch.upper() == current_upper
-            btn = ui.button(
-                icon="check" if is_active else "colorize",
-                on_click=lambda c=swatch: on_select(c),
-            ).props("flat dense round").style(
-                f"background-color: {swatch}; "
-                f"width: 28px; height: 28px; min-width: 28px;"
-            )
-            if is_active:
-                btn.props("outline")
+    def open_picker():
+        with ui.dialog() as dialog, ui.card().classes("gap-2"):
+            ui.label("Pick a color").classes("text-lg font-semibold")
 
-        if allow_custom:
-            _custom_swatch_with_picker(current_color, on_select)
+            with ui.grid(columns=3).classes("gap-1"):
+                for swatch in palette:
+                    is_active = swatch.upper() == current_upper
+                    btn = ui.button(
+                        icon="check" if is_active else "colorize",
+                        on_click=lambda c=swatch: (
+                            on_select(c), dialog.close(),
+                        ),
+                    ).props("flat dense round").style(
+                        f"background-color: {swatch}; "
+                        f"width: 28px; height: 28px; min-width: 28px;"
+                    )
+                    if is_active:
+                        btn.props("outline")
 
-
-def _custom_swatch_with_picker(current_color: str, on_select: Callable[[str], None]) -> None:
-    from nicegui import ui
-
-    def open_custom_picker():
-        with ui.dialog() as dialog, ui.card():
-            ui.label("Custom color").classes("text-lg font-semibold")
-            color_input = ui.color_input(
-                label="Hex color", value=current_color,
-            ).classes("w-full")
-            with ui.row().classes("justify-end w-full gap-2"):
-                ui.button("Cancel", on_click=dialog.close).props("flat")
-                ui.button(
-                    "Apply",
-                    on_click=lambda: (
-                        on_select(color_input.value),
-                        dialog.close(),
-                    ),
-                ).props("unelevated")
+            if allow_custom:
+                ui.separator()
+                ui.label("Custom").classes("text-sm")
+                color_input = ui.color_input(
+                    label="Hex color", value=current_color,
+                ).classes("w-full")
+                with ui.row().classes("justify-end w-full gap-2"):
+                    ui.button("Cancel", on_click=dialog.close).props("flat")
+                    ui.button(
+                        "Apply",
+                        on_click=lambda: (
+                            on_select(color_input.value),
+                            dialog.close(),
+                        ),
+                    ).props("unelevated")
         dialog.open()
 
     ui.button(
-        icon="palette",
-        on_click=open_custom_picker,
-    ).props("flat dense round").tooltip("Custom color")
+        icon="colorize",
+        on_click=open_picker,
+    ).props("flat dense round").style(
+        f"background-color: {current_color}; "
+        f"width: 28px; height: 28px; min-width: 28px;"
+    )
 
 
 # Fixed palette that per-user colors are deterministically drawn from
