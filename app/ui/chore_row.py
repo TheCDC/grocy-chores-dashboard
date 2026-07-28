@@ -50,20 +50,20 @@ def render_chore_row(
             manually reassigned.
     """
     overdue_style = (
-        f"border-left: 4px solid {theme.OVERDUE_ACCENT}; padding-left: 8px;"
+        f"border-left: 4px solid {resolved_theme.overdue_accent}; padding-left: 8px;"
         if chore.is_overdue
         else "padding-left: 12px;"  # keep text aligned whether or not the bar is present
     )
     with ui.row().classes("items-center w-full").style(overdue_style):
         with ui.column().classes("flex-grow"):
-            ui.label(chore.name).style(f"color: {theme.TEXT_PRIMARY};").classes(
+            ui.label(chore.name).style(f"color: {resolved_theme.text_primary};").classes(
                 "text-lg font-semibold"
             )
             if chore.due_at is not None:
                 # TODO: human-friendly relative due-date formatting
                 # ("Overdue by 2 days" / "Due tomorrow"), not a raw
                 # timestamp — this is a glance-at-from-across-the-room UI.
-                ui.label(str(chore.due_at)).style(f"color: {theme.TEXT_MUTED};").classes(
+                ui.label(str(chore.due_at)).style(f"color: {resolved_theme.text_muted};").classes(
                     "text-sm"
                 )
 
