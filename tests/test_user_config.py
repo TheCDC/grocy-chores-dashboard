@@ -8,8 +8,6 @@ import pytest
 
 from app.user_config import (
     UserConfig,
-    UserConfigError,
-    UserConfigNotFoundError,
     UserEntry,
     load_user_config,
     save_user_config,

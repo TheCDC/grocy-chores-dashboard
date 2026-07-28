@@ -89,7 +89,7 @@ def load_user_config(path: str | Path) -> UserConfig:
     except (KeyError, TypeError) as exc:
         raise UserConfigError(
             f"Malformed user config in {p}: expected {{'users': [{{'id': int, "
-            f"'color': str|null}}, ...]}}"
+            f"'color': str|null, 'card_bg': str|null}}, ...]}}"
         ) from exc
 
     if not users:
