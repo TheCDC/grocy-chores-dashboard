@@ -57,10 +57,10 @@ def render_chore_row(
         if chore.is_overdue
         else "padding-left: 12px;"  # keep text aligned whether or not the bar is present
     )
-    with ui.row().classes("items-center w-full").style(overdue_style):
-        with ui.column().classes("flex-grow"):
+    with ui.row().classes("items-center w-full flex-nowrap").style(overdue_style):
+        with ui.column().classes("flex-grow min-w-0"):
             ui.label(chore.name).style(f"color: {text_color};").classes(
-                "text-lg font-semibold"
+                "text-base font-semibold truncate"
             )
             if chore.due_at is not None:
                 ui.label(humanize.naturaltime(chore.due_at)).style(
@@ -72,14 +72,14 @@ def render_chore_row(
             icon="done",
             on_click=lambda: on_mark_done(chore.id),
         ).props("unelevated round dense").classes(
-            f"min-w-[{theme.MIN_TAP_TARGET_PX}px] min-h-[{theme.MIN_TAP_TARGET_PX}px]"
+            f"min-w-[{theme.MIN_TAP_TARGET_PX}px]"
         ).tooltip("Mark done")
 
         ui.button(
             icon="skip_next",
             on_click=lambda: _confirm_skip(chore, on_skip),
         ).props("flat round dense").classes(
-            f"min-w-[{theme.MIN_TAP_TARGET_PX}px] min-h-[{theme.MIN_TAP_TARGET_PX}px]"
+            f"min-w-[{theme.MIN_TAP_TARGET_PX}px]"
         ).tooltip("Skip")
 
         if chore.is_manually_reassignable:
@@ -92,7 +92,7 @@ def render_chore_row(
                 options,
                 label="Reassign",
                 on_change=lambda e: on_reassign(chore, e.value),
-            )
+            ).classes("w-20")
         else:
             # Disabled rather than omitted, so it's visible that
             # reassignment exists but isn't available for this chore —
@@ -101,7 +101,7 @@ def render_chore_row(
                 {},
                 label="Reassign",
                 on_change=lambda e: None,
-            ).props("disable").tooltip(
+            ).classes("w-20").props("disable").tooltip(
                 "This chore auto-assigns the next person "
                 "(see its assignment settings in Grocy), so it can't be "
                 "manually reassigned here."
