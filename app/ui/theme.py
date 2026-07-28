@@ -10,11 +10,96 @@ at on real hardware and adjusting before calling it final.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from dataclasses import dataclass
+
+from app.user_config import UserConfig
+
 BACKGROUND = "#1E2A24"      # dark chalkboard slate-green (page background)
 SURFACE = "#28362F"         # card background — one step lighter than the board
 TEXT_PRIMARY = "#F5F1E6"    # chalk white/cream
 TEXT_MUTED = "#AEB8AE"      # muted chalk gray-green, for due-dates/secondary text
 OVERDUE_ACCENT = "#FF6B57"  # chalk coral-red, for the overdue left-edge bar
+
+
+@dataclass
+class ResolvedTheme:
+    background: str = BACKGROUND
+    surface: str = SURFACE
+    text_primary: str = TEXT_PRIMARY
+    text_muted: str = TEXT_MUTED
+    overdue_accent: str = OVERDUE_ACCENT
+
+
+def resolve_theme(overrides: UserConfig | None = None) -> ResolvedTheme:
+    if overrides is None:
+        return ResolvedTheme()
+    return ResolvedTheme(
+        background=overrides.page_bg or BACKGROUND,
+        surface=overrides.surface or SURFACE,
+        text_primary=overrides.text_primary or TEXT_PRIMARY,
+        text_muted=overrides.text_muted or TEXT_MUTED,
+        overdue_accent=overrides.overdue_accent or OVERDUE_ACCENT,
+    )
+
+
+def color_swatch_picker(
+    current_color: str,
+    on_select: Callable[[str], None],
+    *,
+    palette: list[str] | None = None,
+    allow_custom: bool = True,
+) -> None:
+    """Render a row of clickable color swatches + optional custom hex picker."""
+    from nicegui import ui
+
+    if palette is None:
+        palette = USER_COLOR_PALETTE
+
+    current_upper = current_color.upper()
+
+    with ui.row().classes("items-center gap-1"):
+        for swatch in palette:
+            is_active = swatch.upper() == current_upper
+            btn = ui.button(
+                icon="check" if is_active else "colorize",
+                on_click=lambda c=swatch: on_select(c),
+            ).props("flat dense round").style(
+                f"background-color: {swatch}; "
+                f"width: 28px; height: 28px; min-width: 28px;"
+            )
+            if is_active:
+                btn.props("outline")
+
+        if allow_custom and current_color.upper() not in {s.upper() for s in palette}:
+            _custom_swatch_with_picker(current_color, on_select)
+
+
+def _custom_swatch_with_picker(current_color: str, on_select: Callable[[str], None]) -> None:
+    from nicegui import ui
+
+    def open_custom_picker():
+        with ui.dialog() as dialog, ui.card():
+            ui.label("Custom color").classes("text-lg font-semibold")
+            color_input = ui.color_input(
+                label="Hex color", value=current_color,
+            ).classes("w-full")
+            with ui.row().classes("justify-end w-full gap-2"):
+                ui.button("Cancel", on_click=dialog.close).props("flat")
+                ui.button(
+                    "Apply",
+                    on_click=lambda: (
+                        on_select(color_input.value),
+                        dialog.close(),
+                    ),
+                ).props("unelevated")
+        dialog.open()
+
+    ui.button(
+        icon="palette",
+        on_click=open_custom_picker,
+    ).props("flat dense round").tooltip("Custom color")
+
 
 # Fixed palette that per-user colors are deterministically drawn from
 # (see get_user_color() below). Soft chalk-pastel hues, distinct enough
