@@ -91,7 +91,7 @@ class ChoreService:
                 continue
             dashboard_user = DashboardUser(
                 id=raw_user.id,
-                display_name=raw_user.display_name,
+                display_name=entry.nickname or raw_user.display_name,
                 color=get_user_color(raw_user.id, override=entry.color),
                 card_bg=entry.card_bg or theme.surface,
                 text_color=entry.text_color or theme.text_primary,

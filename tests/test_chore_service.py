@@ -121,3 +121,29 @@ def test_dashboard_user_text_muted_falls_back_to_text_muted(service):
 
     user_chores_list, theme = service.get_dashboard_data()
     assert user_chores_list[0].user.text_muted == TEXT_MUTED
+
+
+def test_dashboard_user_display_name_uses_nickname(service):
+    service._load_user_config = lambda: UserConfig(
+        users=[UserEntry(id=1, nickname="Buddy")],
+    )
+    service._client.list_users.return_value = [
+        MagicMock(id=1, display_name="Alice")
+    ]
+    service._client.list_chores.return_value = []
+
+    user_chores_list, _ = service.get_dashboard_data()
+    assert user_chores_list[0].user.display_name == "Buddy"
+
+
+def test_dashboard_user_display_name_falls_back_to_grocy_name(service):
+    service._load_user_config = lambda: UserConfig(
+        users=[UserEntry(id=1)],  # no nickname
+    )
+    service._client.list_users.return_value = [
+        MagicMock(id=1, display_name="Alice")
+    ]
+    service._client.list_chores.return_value = []
+
+    user_chores_list, _ = service.get_dashboard_data()
+    assert user_chores_list[0].user.display_name == "Alice"
