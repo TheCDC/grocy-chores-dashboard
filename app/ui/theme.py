@@ -15,10 +15,10 @@ from dataclasses import dataclass
 
 from app.user_config import UserConfig
 
-BACKGROUND = "#1E2A24"      # dark chalkboard slate-green (page background)
-SURFACE = "#28362F"         # card background — one step lighter than the board
-TEXT_PRIMARY = "#F5F1E6"    # chalk white/cream
-TEXT_MUTED = "#AEB8AE"      # muted chalk gray-green, for due-dates/secondary text
+BACKGROUND = "#D6F5E5"  # dark chalkboard slate-green (page background)
+SURFACE = "#28362F"  # card background — one step lighter than the board
+TEXT_PRIMARY = "#181715"  # chalk white/cream
+TEXT_MUTED = "#181A18"  # muted chalk gray-green, for due-dates/secondary text
 OVERDUE_ACCENT = "#FF6B57"  # chalk coral-red, for the overdue left-edge bar
 
 
@@ -66,14 +66,19 @@ def color_swatch_picker(
             with ui.grid(columns=3).classes("gap-1"):
                 for swatch in palette:
                     is_active = swatch.upper() == current_upper
-                    btn = ui.button(
-                        icon="check" if is_active else "colorize",
-                        on_click=lambda c=swatch: (
-                            on_select(c), dialog.close(),
-                        ),
-                    ).props("flat dense round").style(
-                        f"background-color: {swatch}; "
-                        f"width: 28px; height: 28px; min-width: 28px;"
+                    btn = (
+                        ui.button(
+                            icon="check" if is_active else "colorize",
+                            on_click=lambda c=swatch: (
+                                on_select(c),
+                                dialog.close(),
+                            ),
+                        )
+                        .props("flat dense round")
+                        .style(
+                            f"background-color: {swatch}; "
+                            f"width: 28px; height: 28px; min-width: 28px;"
+                        )
                     )
                     if is_active:
                         btn.props("outline")
@@ -82,7 +87,8 @@ def color_swatch_picker(
                 ui.separator()
                 ui.label("Custom").classes("text-sm")
                 color_input = ui.color_input(
-                    label="Hex color", value=current_color,
+                    label="Hex color",
+                    value=current_color,
                 ).classes("w-full")
                 with ui.row().classes("justify-end w-full gap-2"):
                     ui.button("Cancel", on_click=dialog.close).props("flat")
@@ -175,5 +181,5 @@ MIN_TAP_TARGET_PX = 48
 # Google Fonts — load these in the page head (see ui/dashboard.py) rather
 # than assuming they're preinstalled on whatever device renders the
 # dashboard (wall tablet, random browser, etc).
-FONT_DISPLAY = "'Kalam', cursive"   # chalk-handwriting feel for names/headers
+FONT_DISPLAY = "'Kalam', cursive"  # chalk-handwriting feel for names/headers
 FONT_BODY = "'Nunito', sans-serif"  # clean, rounded, legible at a distance/touch

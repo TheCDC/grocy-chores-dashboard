@@ -39,9 +39,9 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
     @ui.page("/settings")
     def settings_page() -> None:
         ui.query("body").style(f"background: {theme.BACKGROUND};")
-        ui.link("← Back to dashboard", "/").style(f"color: {theme.TEXT_MUTED};").classes(
-            "text-sm"
-        )
+        ui.link("← Back to dashboard", "/").style(
+            f"color: {theme.TEXT_MUTED};"
+        ).classes("text-sm")
         ui.label("Settings").style(
             f"color: {theme.TEXT_PRIMARY}; font-family: {theme.FONT_DISPLAY};"
         ).classes("text-3xl")
@@ -58,15 +58,29 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
             theme_overrides = {
                 "page_bg": (user_config.page_bg, BACKGROUND, "Page background"),
                 "surface": (user_config.surface, SURFACE, "Card default background"),
-                "text_primary": (user_config.text_primary, TEXT_PRIMARY, "Primary text"),
+                "text_primary": (
+                    user_config.text_primary,
+                    TEXT_PRIMARY,
+                    "Primary text",
+                ),
                 "text_muted": (user_config.text_muted, TEXT_MUTED, "Muted text"),
-                "overdue_accent": (user_config.overdue_accent, OVERDUE_ACCENT, "Overdue accent"),
+                "overdue_accent": (
+                    user_config.overdue_accent,
+                    OVERDUE_ACCENT,
+                    "Overdue accent",
+                ),
             }
 
-            for field_name, (current_val, default_val, label) in theme_overrides.items():
+            for field_name, (
+                current_val,
+                default_val,
+                label,
+            ) in theme_overrides.items():
                 resolved_val = current_val or default_val
                 with ui.row().classes("items-center gap-2 w-full"):
-                    ui.label(label).style(f"color: {theme.TEXT_PRIMARY};").classes("w-40")
+                    ui.label(label).style(f"color: {theme.TEXT_PRIMARY};").classes(
+                        "w-40"
+                    )
                     color_swatch_picker(
                         current_color=resolved_val,
                         on_select=lambda c, f=field_name: (
@@ -75,24 +89,30 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
                         ),
                     )
                     if current_val is not None:
-                        ui.button("Default", on_click=lambda f=field_name: (
-                            setattr(user_config, f, None),
-                            render_entries(),
-                        )).props("flat dense")
+                        ui.button(
+                            "Default",
+                            on_click=lambda f=field_name: (
+                                setattr(user_config, f, None),
+                                render_entries(),
+                            ),
+                        ).props("flat dense")
 
             with ui.row().classes("items-center gap-2 mt-2"):
-                ui.button("Reset all to defaults", on_click=lambda: (
-                    setattr(user_config, "page_bg", None),
-                    setattr(user_config, "surface", None),
-                    setattr(user_config, "text_primary", None),
-                    setattr(user_config, "text_muted", None),
-                    setattr(user_config, "overdue_accent", None),
-                    render_entries(),
-                )).props("flat")
+                ui.button(
+                    "Reset all to defaults",
+                    on_click=lambda: (
+                        setattr(user_config, "page_bg", None),
+                        setattr(user_config, "surface", None),
+                        setattr(user_config, "text_primary", None),
+                        setattr(user_config, "text_muted", None),
+                        setattr(user_config, "overdue_accent", None),
+                        render_entries(),
+                    ),
+                ).props("flat")
 
-        ui.label("Users on the dashboard").style(f"color: {theme.TEXT_PRIMARY};").classes(
-            "text-lg font-semibold mt-4"
-        )
+        ui.label("Users on the dashboard").style(
+            f"color: {theme.TEXT_PRIMARY};"
+        ).classes("text-lg font-semibold mt-4")
         entries_column = ui.column().classes("w-full gap-2")
 
         def render_entries() -> None:
@@ -169,10 +189,14 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
                         f"color: {theme.TEXT_PRIMARY};"
                     ).classes("font-medium")
                     with ui.row().classes("items-center gap-1"):
-                        nickname_input = ui.input(
-                            value=entry.nickname or "",
-                            placeholder="Nickname",
-                        ).classes("w-36").props("dense")
+                        nickname_input = (
+                            ui.input(
+                                value=entry.nickname or "",
+                                placeholder="Nickname",
+                            )
+                            .classes("w-36")
+                            .props("dense")
+                        )
                         if entry.nickname and grocy_user:
                             ui.label(f"(Grocy: {grocy_user.display_name})").style(
                                 f"color: {theme.TEXT_MUTED};"
@@ -197,23 +221,27 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
 
                 ui.label("Text").style(f"color: {theme.TEXT_MUTED};").classes("text-xs")
                 color_swatch_picker(
-                    current_color=entry.text_color or resolve_theme(user_config).text_primary,
+                    current_color=entry.text_color
+                    or resolve_theme(user_config).text_primary,
                     on_select=_set_text_color,
                 )
                 if entry.text_color is not None:
-                    ui.button("Use default", on_click=lambda: _set_text_color(None)).props(
-                        "flat dense"
-                    )
+                    ui.button(
+                        "Use default", on_click=lambda: _set_text_color(None)
+                    ).props("flat dense")
 
-                ui.label("Muted").style(f"color: {theme.TEXT_MUTED};").classes("text-xs")
+                ui.label("Muted").style(f"color: {theme.TEXT_MUTED};").classes(
+                    "text-xs"
+                )
                 color_swatch_picker(
-                    current_color=entry.text_muted or resolve_theme(user_config).text_muted,
+                    current_color=entry.text_muted
+                    or resolve_theme(user_config).text_muted,
                     on_select=_set_text_muted,
                 )
                 if entry.text_muted is not None:
-                    ui.button("Use default", on_click=lambda: _set_text_muted(None)).props(
-                        "flat dense"
-                    )
+                    ui.button(
+                        "Use default", on_click=lambda: _set_text_muted(None)
+                    ).props("flat dense")
 
                 ui.label("BG").style(f"color: {theme.TEXT_MUTED};").classes("text-xs")
                 color_swatch_picker(
@@ -247,7 +275,9 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
                 if add_user_select.value in {e.id for e in user_config.users}:
                     ui.notify("That user is already on the dashboard", type="warning")
                     return
-                user_config.users.append(UserEntry(id=add_user_select.value, color=None))
+                user_config.users.append(
+                    UserEntry(id=add_user_select.value, color=None)
+                )
                 add_user_select.set_value(None)
                 render_entries()
 
