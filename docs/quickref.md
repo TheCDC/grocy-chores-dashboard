@@ -94,7 +94,7 @@ class UserChores:
 
 ```python
 @dataclass
-class UserEntry: id: int; color: str|None = None; card_bg: str|None = None; text_color: str|None = None; text_muted: str|None = None
+class UserEntry: id: int; color: str|None = None; nickname: str|None = None; card_bg: str|None = None; text_color: str|None = None; text_muted: str|None = None
 
 @dataclass
 class UserConfig: users: list[UserEntry]; page_bg: str|None = None; surface: str|None = None; text_primary: str|None = None; text_muted: str|None = None; overdue_accent: str|None = None
