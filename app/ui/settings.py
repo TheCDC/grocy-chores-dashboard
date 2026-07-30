@@ -178,8 +178,8 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
                                 f"color: {theme.TEXT_MUTED};"
                             ).classes("text-xs")
 
-                        def _set_nickname(e, _entry=entry):
-                            val = e.value.strip() or None
+                        def _set_nickname(_entry=entry):
+                            val = nickname_input.value.strip() or None
                             _entry.nickname = val
                             render_entries()
 
