@@ -38,6 +38,7 @@ class UserEntry:
     # This field is what the settings page writes to when someone picks
     # a custom color for a user.
     color: str | None = None
+    nickname: str | None = None
     card_bg: str | None = None
     text_color: str | None = None
     text_muted: str | None = None
@@ -87,7 +88,7 @@ def load_user_config(path: str | Path) -> UserConfig:
         raise UserConfigError(f"Invalid JSON in {p}: {exc}") from exc
 
     try:
-        users = [UserEntry(id=u["id"], color=u.get("color"), card_bg=u.get("card_bg"), text_color=u.get("text_color"), text_muted=u.get("text_muted")) for u in raw["users"]]
+        users = [UserEntry(id=u["id"], color=u.get("color"), nickname=u.get("nickname"), card_bg=u.get("card_bg"), text_color=u.get("text_color"), text_muted=u.get("text_muted")) for u in raw["users"]]
     except (KeyError, TypeError) as exc:
         raise UserConfigError(
             f"Malformed user config in {p}: expected {{'users': [{{'id': int, "

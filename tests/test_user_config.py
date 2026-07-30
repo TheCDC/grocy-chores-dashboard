@@ -81,3 +81,30 @@ def test_load_user_config_missing_new_fields_are_none(tmp_path: Path):
     assert config.users[0].text_color is None
     assert config.users[0].text_muted is None
     assert config.page_bg is None
+
+
+def test_user_entry_nickname_defaults_to_none():
+    entry = UserEntry(id=1)
+    assert entry.nickname is None
+
+
+def test_user_entry_nickname_can_be_set():
+    entry = UserEntry(id=1, nickname="Buddy")
+    assert entry.nickname == "Buddy"
+
+
+def test_load_user_config_with_nickname(tmp_path: Path):
+    path = tmp_path / "nickname.json"
+    path.write_text(json.dumps({
+        "users": [{"id": 1, "color": None, "nickname": "Momo"}]
+    }))
+    config = load_user_config(path)
+    assert config.users[0].nickname == "Momo"
+
+
+def test_load_user_config_missing_nickname_is_none(tmp_path: Path):
+    """Old config without nickname field should default to None."""
+    path = tmp_path / "old.json"
+    path.write_text(json.dumps({"users": [{"id": 1, "color": "#FFD166"}]}))
+    config = load_user_config(path)
+    assert config.users[0].nickname is None
