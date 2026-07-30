@@ -164,9 +164,27 @@ def build_settings_page(client: GrocyClient, config: Config) -> None:
                     "flat dense"
                 ).set_enabled(index < total - 1)
 
-                ui.label(display_name).style(f"color: {theme.TEXT_PRIMARY};").classes(
-                    "flex-grow font-medium"
-                )
+                with ui.column().classes("flex-grow gap-0"):
+                    ui.label(display_name).style(
+                        f"color: {theme.TEXT_PRIMARY};"
+                    ).classes("font-medium")
+                    with ui.row().classes("items-center gap-1"):
+                        nickname_input = ui.input(
+                            value=entry.nickname or "",
+                            placeholder="Nickname",
+                        ).classes("w-36").props("dense")
+                        if entry.nickname and grocy_user:
+                            ui.label(f"(Grocy: {grocy_user.display_name})").style(
+                                f"color: {theme.TEXT_MUTED};"
+                            ).classes("text-xs")
+
+                        def _set_nickname(e, _entry=entry):
+                            val = e.value.strip() or None
+                            _entry.nickname = val
+                            render_entries()
+
+                        nickname_input.on("blur", _set_nickname)
+                        nickname_input.on("keydown.enter", _set_nickname)
 
                 color_swatch_picker(
                     current_color=entry.color or resolved_color,
