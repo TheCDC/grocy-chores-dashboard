@@ -14,6 +14,11 @@ from app.ui import theme
 from app.ui.chore_row import render_chore_row
 from app.ui.theme import ResolvedTheme
 
+# Scroll position cache: user_id -> vertical scroll offset (px).
+# Survives re-renders so each user's chore list stays scrolled where
+# the user left it between refreshes.
+_scroll_positions: dict[int, int] = {}
+
 
 def render_user_card(
     user_chores: UserChores,
@@ -64,9 +69,17 @@ def render_user_card(
             return
 
         # Vertical scrollable chore list (requirements §2).
-        with ui.column().classes("w-full gap-2 overflow-y-auto mt-2").style(
-            f"max-height: {theme.CARD_MIN_HEIGHT_PX - 80}px;"
-        ):
+        # ui.scroll_area retains its own scroll position across re-renders
+        # via the _scroll_positions cache below.
+        with ui.scroll_area().classes("w-full mt-2").style(
+            f"height: {theme.CARD_MIN_HEIGHT_PX - 80}px;"
+        ) as sc:
+            sc.on_scroll(
+                lambda e: _scroll_positions.__setitem__(
+                    user_chores.user.id, int(e.vertical_position)
+                )
+            )
+
             for chore in user_chores.chores:
                 render_chore_row(
                     chore,
@@ -78,3 +91,8 @@ def render_user_card(
                     on_skip=on_skip,
                     on_reassign=on_reassign,
                 )
+
+            # Restore previous scroll position after rows are rendered.
+            saved = _scroll_positions.get(user_chores.user.id)
+            if saved is not None:
+                sc.scroll_to(pixels=saved)

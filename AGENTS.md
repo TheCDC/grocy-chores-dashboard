@@ -59,3 +59,7 @@ main.py → Config → GrocyClient → ChoreService → ui/{dashboard,settings}
 - **Python 3.14** (`.python-version`). Dependencies: `nicegui>=1.4`, `grocy-py>=0.1.0`.
 - **`.gitignore` gaps**: doesn't cover `.env` (secrets) or `data/` (runtime user data). Be careful with git operations.
 - **Syncthing sync-conflict files** (`.sync-conflict-*`) exist in the tree — ignore them; they're stale copies, not source of truth.
+
+## Response compactness
+
+Answer in 1-3 sentences. No preamble/postamble, no code explanation unless asked. `docs/quickref.md` has the data-model/component signatures so I don't reread sources every task.
